@@ -140,6 +140,15 @@ body {
   margin: 0 auto;
 }
 
+.hero h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  color: var(--text-light);
+}
+
 .hero h2 {
   font-size: 3rem;
   font-weight: 700;
@@ -182,7 +191,7 @@ body {
   padding: 5rem 2rem;
 }
 
-.section h3 {
+.section h2 {
   font-size: 2.5rem;
   text-align: center;
   margin-bottom: 3rem;
@@ -195,7 +204,7 @@ body {
   color: var(--text-light);
 }
 
-.section.dark h3 {
+.section.dark h2 {
   color: var(--text-light);
 }
 
@@ -220,7 +229,7 @@ body {
   box-shadow: var(--shadow-lg);
 }
 
-.service h4 {
+.service h3 {
   color: var(--primary);
   font-size: 1.4rem;
   margin-bottom: 1rem;
@@ -308,6 +317,77 @@ body {
   max-width: 1000px;
 }
 
+/* Pricing section styles */
+.pricing-intro {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-bottom: 3rem;
+  opacity: 0.9;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 3rem;
+  margin: 3rem 0;
+}
+
+.pricing-feature {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2.5rem;
+  border-radius: 12px;
+  border-left: 4px solid var(--accent);
+  backdrop-filter: blur(10px);
+}
+
+.pricing-feature h3 {
+  color: var(--accent);
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.pricing-feature ul {
+  list-style: none;
+  padding: 0;
+}
+
+.pricing-feature li {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.pricing-feature li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.cost-savings {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2.5rem;
+  border-radius: 12px;
+  margin: 3rem 0;
+  text-align: center;
+}
+
+.cost-savings h3 {
+  color: var(--accent);
+  margin-bottom: 1.5rem;
+}
+
+.cta-pricing {
+  text-align: center;
+  margin-top: 3rem;
+}
+
+.cta-pricing p {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
 .footer {
   text-align: center;
   background: linear-gradient(135deg, #0f172a, #1e293b);
@@ -351,6 +431,15 @@ body {
   
   .testimonials {
     grid-template-columns: 1fr;
+  }
+  
+  .pricing-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .pricing-feature {
+    padding: 2rem;
   }
   
   .section {
