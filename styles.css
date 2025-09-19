@@ -295,6 +295,19 @@ body {
   font-weight: 600;
 }
 
+/* Calendly styling */
+.calendly-inline-widget {
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  margin: 2rem auto;
+  max-width: 900px;
+}
+
+#contact .container {
+  max-width: 1000px;
+}
+
 .footer {
   text-align: center;
   background: linear-gradient(135deg, #0f172a, #1e293b);
