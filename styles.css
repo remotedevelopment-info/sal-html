@@ -53,13 +53,38 @@ body {
 }
 
 .logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin: 0;
 }
 
+.logo-container {
+  background-color: #1e3a8a; /* Dark blue background */
+  padding: 8px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .logo-img {
-  height: 50px;
+  height: 32px;
   width: auto;
+  display: block;
   transition: transform 0.3s ease;
+}
+
+.company-name {
+  display: flex;
+  align-items: center;
+}
+
+.company-text {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #1e3a8a;
+  letter-spacing: -0.025em;
 }
 
 .logo-img:hover {
@@ -403,6 +428,22 @@ body {
     padding: 0.5rem 1rem;
   }
   
+  .logo {
+    gap: 8px;
+  }
+  
+  .logo-container {
+    padding: 6px 10px;
+  }
+  
+  .logo-img {
+    height: 28px;
+  }
+  
+  .company-text {
+    font-size: 1rem;
+  }
+  
   .nav-links {
     display: none;
   }
@@ -448,5 +489,12 @@ body {
   
   .container {
     padding: 1rem;
+  }
+}
+
+/* Extra small mobile styles */
+@media (max-width: 480px) {
+  .company-text {
+    font-size: 0.9rem;
   }
 }
