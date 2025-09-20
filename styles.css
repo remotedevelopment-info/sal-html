@@ -18,6 +18,7 @@ body {
   background: var(--bg-light);
   color: var(--text-dark);
   scroll-behavior: smooth;
+  overflow-y: scroll;
 }
 
 .dark body {
@@ -424,9 +425,10 @@ body {
 
 /* Mobile responsive styles */
 @media (max-width: 768px) {
-body {
-      overflow-y: scroll;
-}
+  body {
+    overflow: scroll;
+  }
+
   .header-content {
     padding: 0.5rem 1rem;
   }
@@ -474,9 +476,6 @@ body {
     display: flex;
     opacity: 1;
     visibility: visible;
-    overflow: scroll;
-    position: fixed;
-    width: 100%;
   }
 
   .nav-links li {
@@ -578,6 +577,11 @@ body {
 }
 
 /* Extra small mobile styles */
+@media (max-width: 480px) {
+  .company-text {
+    font-size: 0.9rem;
+  }
+}
 @media (max-width: 480px) {
   .company-text {
     font-size: 0.9rem;
