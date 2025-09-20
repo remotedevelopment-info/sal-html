@@ -1,0 +1,8 @@
+# Docker files
+Dockerfile
+docker-compose.yml
+
+# Don't include git or other development files in the Docker image
+.git/
+.gitignore
+README.md
