@@ -189,13 +189,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize cookie consent system
   new CookieConsent();
 
-  // Service Worker registration for better caching (if available)
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // Service worker not available, continue normally
-    });
-  }
-
   // Lazy load images (if Intersection Observer is supported)
   if ('IntersectionObserver' in window) {
     const imageObserver = new IntersectionObserver((entries, observer) => {
