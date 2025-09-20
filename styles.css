@@ -150,7 +150,7 @@ body {
 .hero {
   background: 
     linear-gradient(135deg, rgba(30, 58, 138, 0.8),rgba(45, 0, 130, 0.8)),
-    url('antelope.webp') center/cover no-repeat;
+    url('antelope.webp') top/cover no-repeat;
   color: var(--text-light);
   text-align: center;
   padding: 8rem 2rem 6rem;
@@ -439,8 +439,7 @@ body {
 
   .hero {
     background: 
-        /* linear-gradient(135deg, rgba(75, 0, 130, 0.8), rgba(30, 58, 138, 0.8)), */
-    linear-gradient(135deg, rgba(38, 58, 138, 0.8),rgba(38, 38, 130, 0.8)),
+    linear-gradient(135deg, rgba(38, 48, 138, 0.8),rgba(38, 48, 130, 0.8)),
         url('antelope.webp') center/cover no-repeat;
     color: var(--text-light);
     text-align: center;
