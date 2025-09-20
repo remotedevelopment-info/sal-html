@@ -347,7 +347,7 @@ body {
 .pricing-intro {
   text-align: center;
   font-size: 1.2rem;
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
   opacity: 0.9;
 }
 
@@ -422,6 +422,14 @@ body {
   font-size: 0.9rem;
   border-top: 1px solid #334155;
 }
+
+.benefit {
+    h4 {
+        margin: 2rem 0 1rem;
+        font-size: 18px;
+    }
+}
+
 
 /* Mobile responsive styles */
 @media (max-width: 768px) {
