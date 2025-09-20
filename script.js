@@ -209,60 +209,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Enhanced analytics tracking for SEO insights
-  function trackUserEngagement() {
-    // Track time on page
+  // Initialize engagement tracking (will be enhanced by GA when loaded)
+  function initializeBasicTracking() {
+    // Track time on page (enhanced version handled by GA)
     let startTime = Date.now();
     
     window.addEventListener('beforeunload', () => {
       const timeOnPage = Math.round((Date.now() - startTime) / 1000);
       if (typeof gtag !== 'undefined' && timeOnPage > 10) {
-        gtag('event', 'timing_complete', {
-          name: 'time_on_page',
-          value: timeOnPage
+        gtag('event', 'session_complete', {
+          name: 'total_time_on_page',
+          value: timeOnPage,
+          event_category: 'engagement'
         });
       }
     });
-
-    // Track CTA clicks
-    document.querySelectorAll('.btn-primary, .cta-button').forEach(button => {
-      button.addEventListener('click', () => {
-        if (typeof gtag !== 'undefined') {
-          gtag('event', 'click', {
-            event_category: 'CTA',
-            event_label: button.textContent.trim(),
-            value: 1
-          });
-        }
-        
-        // Track service inquiry
-        if (typeof trackServiceInquiry === 'function') {
-          trackServiceInquiry('consultation_request');
-        }
-      });
-    });
-
-    // Track section views for better content insights
-    const sectionObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting && typeof gtag !== 'undefined') {
-          const sectionId = entry.target.id || entry.target.className;
-          gtag('event', 'view_section', {
-            event_category: 'engagement',
-            event_label: sectionId,
-            value: 1
-          });
-        }
-      });
-    }, { threshold: 0.5 });
-
-    document.querySelectorAll('section[id]').forEach(section => {
-      sectionObserver.observe(section);
-    });
   }
 
-  // Initialize engagement tracking
-  trackUserEngagement();
+  // Initialize basic tracking
+  initializeBasicTracking();
 
   // Dark mode preference handling
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;

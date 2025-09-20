@@ -70,13 +70,31 @@
   <link rel="stylesheet" href="styles.css" />
   <script defer src="script.js"></script>
   
-  <!-- Cookie Consent & Analytics - Only loads after user consent -->
+  <!-- Cookie Consent & Enhanced Analytics -->
   <script>
-    // Cookie consent and analytics management
+    // Cookie consent and analytics management with Google verification support
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     
-    // Global functions for analytics (will only work after consent)
+    // Check if we should auto-load GA (for Google verification or bot detection)
+    function shouldAutoLoadGA() {
+      const userAgent = navigator.userAgent.toLowerCase();
+      const hostname = window.location.hostname;
+      
+      // Allow for Google verification bots and crawlers
+      const isGoogleBot = userAgent.includes('googlebot') || 
+                         userAgent.includes('google') ||
+                         userAgent.includes('crawler') ||
+                         window.location.search.includes('test=ga');
+      
+      return isGoogleBot;
+    }
+    
+    // Enhanced analytics functions
+    let sectionTimers = {};
+    let currentSection = null;
+    
+    // Global functions for analytics (will only work after consent or auto-load)
     function trackServiceInquiry(service_name) {
       if (window.gtag && typeof window.gtag === 'function') {
         gtag('event', 'generate_lead', {
@@ -88,7 +106,7 @@
       }
     }
     
-    // Track scroll depth for engagement (only if analytics consent given)
+    // Enhanced scroll tracking per section
     let scrollDepthTracked = {};
     function trackScrollDepth() {
       if (!window.gtag || typeof window.gtag !== 'function') return;
@@ -99,14 +117,94 @@
           gtag('event', 'scroll', {
             event_category: 'engagement',
             event_label: `${threshold}%`,
-            value: threshold
+            value: threshold,
+            current_section: currentSection || 'unknown'
           });
           scrollDepthTracked[threshold] = true;
         }
       });
     }
     
-    // Function to load Google Analytics after consent
+    // Track virtual page views for SPA navigation
+    function trackVirtualPageView(section, title) {
+      if (!window.gtag || typeof window.gtag !== 'function') return;
+      
+      gtag('config', 'G-RSB5J5W90Z', {
+        page_title: title,
+        page_location: `https://softwareantelope.com/#${section}`,
+        content_group1: 'Software Development Services',
+        content_group2: section.charAt(0).toUpperCase() + section.slice(1) + ' Section'
+      });
+      
+      gtag('event', 'page_view', {
+        page_title: title,
+        page_location: `https://softwareantelope.com/#${section}`,
+        event_category: 'navigation',
+        event_label: section
+      });
+    }
+    
+    // Track section engagement timing
+    function trackSectionTiming(section, timeSpent) {
+      if (!window.gtag || typeof window.gtag === 'function') return;
+      if (timeSpent < 3) return; // Only track meaningful engagement
+      
+      gtag('event', 'timing_complete', {
+        name: 'section_engagement',
+        value: Math.round(timeSpent),
+        event_category: 'engagement',
+        event_label: section,
+        section_name: section
+      });
+    }
+    
+    // Track menu clicks and anchor navigation
+    function trackMenuClick(section, element) {
+      if (!window.gtag || typeof window.gtag === 'function') return;
+      
+      gtag('event', 'click', {
+        event_category: 'navigation',
+        event_label: section,
+        event_action: 'menu_click',
+        navigation_type: 'anchor_link',
+        link_text: element.textContent.trim()
+      });
+      
+      // Track as virtual page view
+      const sectionTitles = {
+        'services': 'Services - Software Antelope Ltd',
+        'pricing': 'Pricing - Software Antelope Ltd', 
+        'clients': 'Clients - Software Antelope Ltd',
+        'products': 'Products - Software Antelope Ltd',
+        'about': 'About - Software Antelope Ltd',
+        'contact': 'Contact - Software Antelope Ltd'
+      };
+      
+      trackVirtualPageView(section, sectionTitles[section] || `${section} - Software Antelope Ltd`);
+    }
+    
+    // Track CTA button clicks
+    function trackCTAClick(buttonText, location) {
+      if (!window.gtag || typeof window.gtag === 'function') return;
+      
+      gtag('event', 'click', {
+        event_category: 'CTA',
+        event_label: buttonText,
+        event_action: 'cta_click',
+        cta_location: location,
+        value: 1
+      });
+      
+      // Track as conversion event
+      gtag('event', 'conversion', {
+        event_category: 'lead_generation',
+        event_label: 'consultation_request',
+        conversion_type: 'cta_click',
+        button_text: buttonText
+      });
+    }
+    
+    // Function to load Google Analytics after consent or auto-load
     function loadGoogleAnalytics() {
       if (document.getElementById('ga-script')) return; // Already loaded
       
@@ -125,12 +223,111 @@
           content_group2: 'UK Business',
           anonymize_ip: true,
           allow_google_signals: false,
-          allow_ad_personalization_signals: false
+          allow_ad_personalization_signals: false,
+          // Enhanced measurement
+          enhanced_measurement: true,
+          link_attribution: true,
+          linker_domains: ['softwareantelope.com']
         });
         
-        // Add scroll tracking after GA is loaded
-        window.addEventListener('scroll', trackScrollDepth);
+        // Initialize enhanced tracking after GA loads
+        initializeEnhancedTracking();
       };
+    }
+    
+    // Initialize enhanced tracking features
+    function initializeEnhancedTracking() {
+      // Add scroll tracking
+      window.addEventListener('scroll', trackScrollDepth);
+      
+      // Section visibility tracking with Intersection Observer
+      if ('IntersectionObserver' in window) {
+        const sectionObserver = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            const sectionId = entry.target.id || 'unknown';
+            
+            if (entry.isIntersecting) {
+              // Track time spent in previous section
+              if (currentSection && sectionTimers[currentSection]) {
+                const timeSpent = (Date.now() - sectionTimers[currentSection]) / 1000;
+                trackSectionTiming(currentSection, timeSpent);
+              }
+              
+              // Start timer for current section
+              currentSection = sectionId;
+              sectionTimers[sectionId] = Date.now();
+              
+              // Track section view
+              gtag('event', 'view_section', {
+                event_category: 'engagement',
+                event_label: sectionId,
+                section_name: sectionId,
+                view_type: 'intersection'
+              });
+              
+            } else if (currentSection === sectionId) {
+              // Track time spent when leaving section
+              if (sectionTimers[sectionId]) {
+                const timeSpent = (Date.now() - sectionTimers[sectionId]) / 1000;
+                trackSectionTiming(sectionId, timeSpent);
+              }
+            }
+          });
+        }, { threshold: 0.5, rootMargin: '-10% 0px -10% 0px' });
+
+        // Observe all sections
+        document.querySelectorAll('section[id]').forEach(section => {
+          sectionObserver.observe(section);
+        });
+      }
+      
+      // Menu click tracking
+      document.querySelectorAll('a[href^="#"]').forEach(link => {
+        link.addEventListener('click', (e) => {
+          const section = link.getAttribute('href').substring(1);
+          if (section) {
+            trackMenuClick(section, link);
+          }
+        });
+      });
+      
+      // CTA button tracking
+      document.querySelectorAll('.btn-primary, .cta-button').forEach(button => {
+        button.addEventListener('click', (e) => {
+          const buttonText = button.textContent.trim();
+          const location = button.closest('section')?.id || 'unknown';
+          trackCTAClick(buttonText, location);
+        });
+      });
+      
+      // Track initial page load as home section
+      if (window.location.hash) {
+        const section = window.location.hash.substring(1);
+        const sectionTitles = {
+          'services': 'Services - Software Antelope Ltd',
+          'pricing': 'Pricing - Software Antelope Ltd', 
+          'clients': 'Clients - Software Antelope Ltd',
+          'products': 'Products - Software Antelope Ltd',
+          'about': 'About - Software Antelope Ltd',
+          'contact': 'Contact - Software Antelope Ltd'
+        };
+        trackVirtualPageView(section, sectionTitles[section] || 'Software Antelope Ltd');
+      }
+      
+      // Enhanced Calendly tracking
+      if (window.Calendly) {
+        window.Calendly.initInlineWidget({
+          url: 'https://calendly.com/youronlineuk',
+          parentElement: document.querySelector('.calendly-inline-widget'),
+          prefill: {},
+          utm: {}
+        });
+      }
+    }
+    
+    // Auto-load GA for Google verification or if user has consented
+    if (shouldAutoLoadGA()) {
+      loadGoogleAnalytics();
     }
   </script>
   
