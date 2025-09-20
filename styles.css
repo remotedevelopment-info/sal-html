@@ -535,8 +535,10 @@ body {
 
   /* Prevent body scroll when menu is open */
   body.menu-open {
-    overflow: hidden;
-  }  .hero {
+    overflow: scroll;
+  }
+  
+  .hero {
     padding: 6rem 1rem 4rem;
     margin-top: 70px;
   }
