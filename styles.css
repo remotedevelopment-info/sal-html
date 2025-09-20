@@ -424,6 +424,9 @@ body {
 
 /* Mobile responsive styles */
 @media (max-width: 768px) {
+body {
+      overflow-y: scroll;
+}
   .header-content {
     padding: 0.5rem 1rem;
   }
@@ -447,7 +450,7 @@ body {
   .nav-links {
     display: none;
     position: fixed;
-    top: 108px;
+    top: 107px;
     left: 0;
     right: 0;
     bottom: 0;
@@ -471,6 +474,9 @@ body {
     display: flex;
     opacity: 1;
     visibility: visible;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
   }
 
   .nav-links li {
