@@ -76,35 +76,29 @@
   <link rel="stylesheet" href="styles.css" />
   <script defer src="script.js"></script>
   
-  <!-- Google Analytics 4 - Replace GA_MEASUREMENT_ID with your actual ID -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+  <!-- Cookie Consent & Analytics - Only loads after user consent -->
   <script>
+    // Cookie consent and analytics management
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'GA_MEASUREMENT_ID', {
-      page_title: 'Software Antelope Ltd - Professional Remote Software Development',
-      page_location: 'https://softwareantelope.com/',
-      content_group1: 'Software Development Services',
-      content_group2: 'UK Business',
-      anonymize_ip: true,
-      allow_google_signals: false,
-      allow_ad_personalization_signals: false
-    });
     
-    // Enhanced ecommerce events for service inquiries
+    // Global functions for analytics (will only work after consent)
     function trackServiceInquiry(service_name) {
-      gtag('event', 'generate_lead', {
-        currency: 'GBP',
-        value: 400.00,
-        service_name: service_name,
-        contact_method: 'consultation_booking'
-      });
+      if (window.gtag && typeof window.gtag === 'function') {
+        gtag('event', 'generate_lead', {
+          currency: 'GBP',
+          value: 400.00,
+          service_name: service_name,
+          contact_method: 'consultation_booking'
+        });
+      }
     }
     
-    // Track scroll depth for engagement
+    // Track scroll depth for engagement (only if analytics consent given)
     let scrollDepthTracked = {};
     function trackScrollDepth() {
+      if (!window.gtag || typeof window.gtag !== 'function') return;
+      
       const scrollPercentage = Math.round((window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100);
       [25, 50, 75, 90].forEach(threshold => {
         if (scrollPercentage >= threshold && !scrollDepthTracked[threshold]) {
@@ -118,7 +112,32 @@
       });
     }
     
-    window.addEventListener('scroll', trackScrollDepth);
+    // Function to load Google Analytics after consent
+    function loadGoogleAnalytics() {
+      if (document.getElementById('ga-script')) return; // Already loaded
+      
+      const script = document.createElement('script');
+      script.id = 'ga-script';
+      script.async = true;
+      script.src = 'https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID';
+      document.head.appendChild(script);
+      
+      script.onload = function() {
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID', {
+          page_title: 'Software Antelope Ltd - Professional Remote Software Development',
+          page_location: 'https://softwareantelope.com/',
+          content_group1: 'Software Development Services',
+          content_group2: 'UK Business',
+          anonymize_ip: true,
+          allow_google_signals: false,
+          allow_ad_personalization_signals: false
+        });
+        
+        // Add scroll tracking after GA is loaded
+        window.addEventListener('scroll', trackScrollDepth);
+      };
+    }
   </script>
   
   <!-- Calendly inline widget script -->
@@ -563,6 +582,124 @@
       <!-- Calendly inline widget end -->
     </div>
   </section>
+
+  <!-- Cookie Consent Banner -->
+  <div id="cookie-consent-banner" class="cookie-consent-banner" role="dialog" aria-labelledby="cookie-consent-title" aria-describedby="cookie-consent-desc" style="display: none;">
+    <div class="cookie-consent-content">
+      <div class="cookie-consent-text">
+        <h3 id="cookie-consent-title">We respect your privacy</h3>
+        <p id="cookie-consent-desc">
+          We use analytics cookies solely to understand how visitors use our site - no personal data is collected or shared. 
+          We don't track you across other websites or sell your information.
+        </p>
+      </div>
+      <div class="cookie-consent-actions">
+        <button id="cookie-accept-all" class="cookie-btn cookie-btn-primary" aria-describedby="accept-desc">
+          Accept Analytics
+        </button>
+        <button id="cookie-reject-all" class="cookie-btn cookie-btn-secondary" aria-describedby="reject-desc">
+          Essential Only
+        </button>
+        <button id="cookie-settings" class="cookie-btn cookie-btn-text" aria-describedby="settings-desc">
+          Cookie Settings
+        </button>
+      </div>
+    </div>
+    <!-- Hidden descriptions for screen readers -->
+    <span id="accept-desc" class="sr-only">Accept analytics cookies to help us understand site usage</span>
+    <span id="reject-desc" class="sr-only">Use only essential cookies required for site functionality</span>
+    <span id="settings-desc" class="sr-only">Open detailed cookie preferences</span>
+  </div>
+
+  <!-- Cookie Settings Modal -->
+  <div id="cookie-settings-modal" class="cookie-modal" role="dialog" aria-labelledby="cookie-modal-title" aria-modal="true" style="display: none;">
+    <div class="cookie-modal-overlay"></div>
+    <div class="cookie-modal-content">
+      <div class="cookie-modal-header">
+        <h2 id="cookie-modal-title">Cookie Preferences</h2>
+        <button id="cookie-modal-close" class="cookie-modal-close" aria-label="Close cookie preferences">&times;</button>
+      </div>
+      
+      <div class="cookie-modal-body">
+        <p class="cookie-policy-intro">
+          Software Antelope Ltd is committed to protecting your privacy. We use cookies to provide essential functionality 
+          and, with your consent, to understand how our site is used.
+        </p>
+        
+        <div class="cookie-category">
+          <div class="cookie-category-header">
+            <h3>Essential Cookies</h3>
+            <span class="cookie-category-status">Always Active</span>
+          </div>
+          <p class="cookie-category-desc">
+            These cookies are necessary for the website to function properly. They remember your cookie preferences 
+            and enable basic site functionality. These cannot be disabled.
+          </p>
+          <details class="cookie-details">
+            <summary>Technical Details</summary>
+            <ul>
+              <li><strong>cookie-consent:</strong> Stores your cookie preferences (expires: 365 days)</li>
+              <li><strong>Session cookies:</strong> Enable basic site functionality (expires: session)</li>
+            </ul>
+          </details>
+        </div>
+
+        <div class="cookie-category">
+          <div class="cookie-category-header">
+            <h3>Analytics Cookies</h3>
+            <label class="cookie-toggle">
+              <input type="checkbox" id="analytics-consent" />
+              <span class="cookie-slider"></span>
+            </label>
+          </div>
+          <p class="cookie-category-desc">
+            We use Google Analytics to understand how visitors use our site. This helps us improve the website. 
+            <strong>No personal information is collected</strong> and all data is anonymized. We do not track you across other websites.
+          </p>
+          <details class="cookie-details">
+            <summary>Technical Details</summary>
+            <ul>
+              <li><strong>Google Analytics:</strong> Anonymous site usage statistics</li>
+              <li><strong>Data collected:</strong> Page views, session duration, general location (country/city)</li>
+              <li><strong>Data retention:</strong> 26 months (Google's standard)</li>
+              <li><strong>IP anonymization:</strong> Enabled</li>
+              <li><strong>Advertising features:</strong> Disabled</li>
+            </ul>
+          </details>
+        </div>
+
+        <div class="cookie-privacy-info">
+          <h3>Your Rights</h3>
+          <p>Under UK GDPR, you have the right to:</p>
+          <ul>
+            <li>Accept or decline non-essential cookies</li>
+            <li>Withdraw consent at any time</li>
+            <li>Access information about cookies we use</li>
+            <li>Request deletion of your data</li>
+          </ul>
+          <p>
+            <strong>Contact:</strong> For privacy questions, email us at privacy@softwareantelope.com or call +44-7565-112990.
+          </p>
+        </div>
+      </div>
+      
+      <div class="cookie-modal-footer">
+        <button id="cookie-save-preferences" class="cookie-btn cookie-btn-primary">
+          Save Preferences
+        </button>
+        <button id="cookie-accept-all-modal" class="cookie-btn cookie-btn-secondary">
+          Accept All
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cookie Management Link (appears after initial consent) -->
+  <div id="cookie-management-link" class="cookie-management" style="display: none;">
+    <button id="manage-cookies" class="cookie-manage-btn" title="Manage cookie preferences">
+      🍪 Cookie Settings
+    </button>
+  </div>
 
   <!-- Footer -->
   <footer class="footer" role="contentinfo">
