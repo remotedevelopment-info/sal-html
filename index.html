@@ -573,6 +573,7 @@
       <nav class="navigation" role="navigation" aria-label="Main navigation">
         <ul class="nav-links">
           <li><a href="#services" class="nav-link" aria-describedby="services-desc">Services</a></li>
+          <li><a href="#calculator" class="nav-link" aria-describedby="calculator-desc">Calculator</a></li>
           <li><a href="#pricing" class="nav-link" aria-describedby="pricing-desc">Pricing</a></li>
           <li><a href="#clients" class="nav-link" aria-describedby="clients-desc">Clients</a></li>
           <li><a href="#products" class="nav-link" aria-describedby="products-desc">Products</a></li>
@@ -624,6 +625,326 @@
              to accelerate delivery and adapt to ever changing market conditions.</p>
             <p>Our experience on managing small teams and knowledge of frameworks means complex dashboards and control in days, not months.</p>
         </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Project Complexity Calculator -->
+  <section id="calculator" class="section dark">
+    <div class="container">
+      <h2>Project Complexity Calculator</h2>
+      <p class="calculator-intro">
+        Get an instant assessment of your project's complexity and timeline. 
+        Find out if we're the right fit for your development needs.
+      </p>
+      
+      <div class="calculator-container">
+        <!-- Progress Bar -->
+        <div class="calculator-progress">
+          <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill"></div>
+          </div>
+          <p id="progress-text" class="progress-text">Question 1 of 5</p>
+        </div>
+
+        <!-- Question Container -->
+        <div id="calculator-questions" class="calculator-questions">
+          
+          <!-- Question 1: Project Type -->
+          <div class="question active" data-question="1">
+            <h3>What type of project are you planning?</h3>
+            <div class="options-grid">
+              <label class="option-card">
+                <input type="radio" name="project-type" value="website" data-score="10" data-weeks="2-4">
+                <div class="option-content">
+                  <h4>Website/Landing Page</h4>
+                  <p>Marketing site, portfolio, or simple business website</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="project-type" value="webapp" data-score="25" data-weeks="6-12">
+                <div class="option-content">
+                  <h4>Web Application</h4>
+                  <p>Interactive app with user accounts, dashboards, forms</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="project-type" value="ecommerce" data-score="30" data-weeks="8-16">
+                <div class="option-content">
+                  <h4>E-commerce Platform</h4>
+                  <p>Online store with payments, inventory, order management</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="project-type" value="saas" data-score="40" data-weeks="12-24">
+                <div class="option-content">
+                  <h4>SaaS Platform</h4>
+                  <p>Software-as-a-Service with subscriptions, multi-tenancy</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="project-type" value="enterprise" data-score="50" data-weeks="16-32">
+                <div class="option-content">
+                  <h4>Enterprise System</h4>
+                  <p>Complex business software, integrations, workflows</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Question 2: Timeline Expectations -->
+          <div class="question" data-question="2">
+            <h3>What's your ideal timeline?</h3>
+            <div class="options-grid">
+              <label class="option-card">
+                <input type="radio" name="timeline" value="asap" data-score="5" data-multiplier="0.5">
+                <div class="option-content">
+                  <h4>ASAP (Rush Job)</h4>
+                  <p>Need it live as soon as possible</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="timeline" value="1-month" data-score="15" data-multiplier="0.8">
+                <div class="option-content">
+                  <h4>1-2 Months</h4>
+                  <p>Quick turnaround for competitive advantage</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="timeline" value="3-months" data-score="25" data-multiplier="1.0">
+                <div class="option-content">
+                  <h4>2-4 Months</h4>
+                  <p>Balanced timeline for quality delivery</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="timeline" value="6-months" data-score="30" data-multiplier="1.2">
+                <div class="option-content">
+                  <h4>4-8 Months</h4>
+                  <p>Comprehensive development with thorough testing</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="timeline" value="flexible" data-score="35" data-multiplier="1.0">
+                <div class="option-content">
+                  <h4>Flexible</h4>
+                  <p>Quality over speed, timeline negotiable</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Question 3: Project Readiness -->
+          <div class="question" data-question="3">
+            <h3>How ready is your project?</h3>
+            <div class="options-grid">
+              <label class="option-card">
+                <input type="radio" name="readiness" value="idea" data-score="5" data-discovery="high">
+                <div class="option-content">
+                  <h4>Just an Idea</h4>
+                  <p>Rough concept, need help defining requirements</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="readiness" value="outlined" data-score="15" data-discovery="medium">
+                <div class="option-content">
+                  <h4>High-Level Plan</h4>
+                  <p>Clear vision but need technical specifications</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="readiness" value="detailed" data-score="25" data-discovery="low">
+                <div class="option-content">
+                  <h4>Detailed Requirements</h4>
+                  <p>Written specs, user stories, clear scope</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="readiness" value="designed" data-score="30" data-discovery="minimal">
+                <div class="option-content">
+                  <h4>Designed & Spec'd</h4>
+                  <p>Have mockups, wireframes, technical requirements</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="readiness" value="started" data-score="20" data-discovery="medium">
+                <div class="option-content">
+                  <h4>Partially Built</h4>
+                  <p>Existing code that needs completion or fixing</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Question 4: Team Preference -->
+          <div class="question" data-question="4">
+            <h3>What kind of development approach do you prefer?</h3>
+            <div class="options-grid">
+              <label class="option-card">
+                <input type="radio" name="team-type" value="solo-fast" data-score="20" data-approach="instant">
+                <div class="option-content">
+                  <h4>Solo Developer (Fast)</h4>
+                  <p>Direct collaboration, rapid prototyping, quick decisions</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="team-type" value="solo-quality" data-score="25" data-approach="quality">
+                <div class="option-content">
+                  <h4>Solo Developer (Quality)</h4>
+                  <p>Thorough development, documentation, best practices</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="team-type" value="small-team" data-score="35" data-approach="managed">
+                <div class="option-content">
+                  <h4>Small Managed Team</h4>
+                  <p>Specialist skills, faster delivery, project management</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="team-type" value="not-sure" data-score="15" data-approach="consultation">
+                <div class="option-content">
+                  <h4>Not Sure</h4>
+                  <p>Need guidance on the best approach for my project</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Question 5: Primary Goal -->
+          <div class="question" data-question="5">
+            <h3>What's your primary goal for this project?</h3>
+            <div class="options-grid">
+              <label class="option-card">
+                <input type="radio" name="goal" value="mvp" data-score="20" data-priority="speed">
+                <div class="option-content">
+                  <h4>MVP/Proof of Concept</h4>
+                  <p>Test the market, validate ideas quickly</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="goal" value="growth" data-score="30" data-priority="scalability">
+                <div class="option-content">
+                  <h4>Business Growth</h4>
+                  <p>Scale operations, improve efficiency, increase revenue</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="goal" value="replacement" data-score="35" data-priority="reliability">
+                <div class="option-content">
+                  <h4>Replace Legacy System</h4>
+                  <p>Modernize existing software, reduce technical debt</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="goal" value="innovation" data-score="40" data-priority="innovation">
+                <div class="option-content">
+                  <h4>Competitive Advantage</h4>
+                  <p>Cutting-edge features, market differentiation</p>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="calculator-nav">
+          <button id="prev-btn" class="calc-btn calc-btn-secondary" disabled>Previous</button>
+          <button id="next-btn" class="calc-btn calc-btn-primary" disabled>Next Question</button>
+        </div>
+
+        <!-- Results Section -->
+        <div id="calculator-results" class="calculator-results" style="display: none;">
+          <div class="results-header">
+            <div class="compatibility-score">
+              <div id="score-circle" class="score-circle">
+                <span id="score-number" class="score-number">0</span>
+                <span class="score-percent">%</span>
+              </div>
+              <h3 id="compatibility-text">Compatibility Assessment</h3>
+            </div>
+          </div>
+
+          <div class="results-content">
+            <div class="result-section">
+              <h4>📋 Project Summary</h4>
+              <div id="project-summary" class="result-details">
+                <!-- Dynamic content -->
+              </div>
+            </div>
+
+            <div class="result-section">
+              <h4>⏱️ Estimated Timeline</h4>
+              <div id="timeline-estimate" class="result-details">
+                <!-- Dynamic content -->
+              </div>
+            </div>
+
+            <div class="result-section">
+              <h4>👥 Recommended Approach</h4>
+              <div id="approach-recommendation" class="result-details">
+                <!-- Dynamic content -->
+              </div>
+            </div>
+
+            <div class="result-section">
+              <h4>🎯 Next Steps</h4>
+              <div id="next-steps" class="result-details">
+                <!-- Dynamic content -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Lead Capture -->
+          <div class="results-cta">
+            <h3>Get Your Detailed Project Assessment</h3>
+            <p>Want a personalized strategy session to discuss your specific requirements?</p>
+            <div class="cta-options">
+              <a href="#contact" class="calc-btn calc-btn-primary calc-btn-large" onclick="trackCalculatorConversion('consultation-booking')">
+                Book Free Strategy Session
+              </a>
+              <button id="email-report" class="calc-btn calc-btn-secondary calc-btn-large" onclick="trackCalculatorConversion('email-report')">
+                Email Me Detailed Report
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email Capture Modal -->
+        <div id="email-modal" class="calculator-modal" style="display: none;">
+          <div class="modal-overlay"></div>
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>Get Your Detailed Project Assessment</h3>
+              <button id="modal-close" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+              <p>We'll email you a comprehensive report with:</p>
+              <ul>
+                <li>Detailed timeline breakdown</li>
+                <li>Technology recommendations</li>
+                <li>Risk assessment and mitigation strategies</li>
+                <li>Budget estimation guidelines</li>
+                <li>Similar project case studies</li>
+              </ul>
+              <form id="email-form" class="email-form">
+                <div class="form-group">
+                  <label for="report-email">Email Address</label>
+                  <input type="email" id="report-email" name="email" required placeholder="your.email@company.com">
+                </div>
+                <div class="form-group">
+                  <label for="report-name">Name (Optional)</label>
+                  <input type="text" id="report-name" name="name" placeholder="Your name">
+                </div>
+                <div class="form-group">
+                  <label for="report-company">Company (Optional)</label>
+                  <input type="text" id="report-company" name="company" placeholder="Company name">
+                </div>
+                <button type="submit" class="calc-btn calc-btn-primary calc-btn-full">Send My Report</button>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
