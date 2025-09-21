@@ -647,6 +647,11 @@ class ProjectCalculator {
       element: e.target
     };
 
+    // Show AI recommendation pill when aiapp is selected
+    if (questionName === 'project-type') {
+      this.updateAIRecommendation(value);
+    }
+
     // Track analytics
     this.trackQuestionAnswer(questionNum, questionName, value);
 
@@ -656,6 +661,43 @@ class ProjectCalculator {
       nextBtn.disabled = false;
       if (this.currentQuestion === this.totalQuestions) {
         nextBtn.textContent = 'Calculate Results';
+      }
+    }
+  }
+
+  updateAIRecommendation(projectType) {
+    const aiPill = document.getElementById('ai-recommended-pill');
+    if (!aiPill) return;
+    
+    if (projectType === 'aiapp') {
+      // Show the recommendation pill with animation
+      aiPill.style.display = 'inline-block';
+      aiPill.style.opacity = '0';
+      aiPill.style.transform = 'scale(0.8)';
+      
+      setTimeout(() => {
+        aiPill.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        aiPill.style.opacity = '1';
+        aiPill.style.transform = 'scale(1)';
+      }, 100);
+      
+      // Auto-highlight the team option (subtle visual cue)
+      const teamOption = document.querySelector('input[name="team-type"][value="small-team"]').closest('.option-card');
+      if (teamOption) {
+        teamOption.style.transition = 'all 0.3s ease';
+        teamOption.style.borderColor = 'var(--accent)';
+        teamOption.style.boxShadow = '0 0 0 2px rgba(139, 92, 246, 0.1)';
+      }
+      
+    } else {
+      // Hide the pill
+      aiPill.style.display = 'none';
+      
+      // Remove highlight from team option
+      const teamOption = document.querySelector('input[name="team-type"][value="small-team"]').closest('.option-card');
+      if (teamOption) {
+        teamOption.style.borderColor = '';
+        teamOption.style.boxShadow = '';
       }
     }
   }
