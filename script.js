@@ -1,3 +1,265 @@
+// Simple .env Processor - Frontend Only Environment Variables
+class EnvProcessor {
+  constructor() {
+    this.vars = {};
+    this.loaded = false;
+    this.loadPromise = this.loadEnv();
+  }
+
+  async loadEnv() {
+    try {
+      const response = await fetch('.env');
+      if (!response.ok) {
+        console.log('No .env file found, using defaults');
+        this.setDefaults();
+        this.loaded = true;
+        return;
+      }
+      
+      const envText = await response.text();
+      this.parseEnv(envText);
+      this.loaded = true;
+      console.log('Environment variables loaded:', Object.keys(this.vars));
+    } catch (error) {
+      console.log('Error loading .env file, using defaults:', error.message);
+      this.setDefaults();
+      this.loaded = true;
+    }
+  }
+
+  parseEnv(envText) {
+    const lines = envText.split('\n');
+    
+    lines.forEach(line => {
+      line = line.trim();
+      
+      // Skip empty lines and comments
+      if (!line || line.startsWith('#')) return;
+      
+      // Match AAAA=value pattern (handles spaces in values)
+      const match = line.match(/^([A-Z_]+)=(.*)$/);
+      if (match) {
+        const [, key, value] = match;
+        // Remove quotes if present and handle empty values
+        this.vars[key] = value.replace(/^["']|["']$/g, '') || '';
+      }
+    });
+  }
+
+  setDefaults() {
+    // Fallback defaults if no .env file
+    this.vars = {
+      COMPANY_NAME: 'Software Antelope Ltd',
+      SITE_URL: 'https://softwareantelope.com',
+      GA_MEASUREMENT_ID: 'G-RSB5J5W90Z',
+      CALENDLY_URL: 'https://calendly.com/youronlineuk',
+      POPUP_DELAY: '120000',
+      LEAD_VALUE: '400',
+      FORMSPREE_ENDPOINT: '',
+      CONTACT_EMAIL: 'info@softwareantelope.com',
+      PHONE: '+44-7565-112990'
+    };
+  }
+
+  async waitForLoad() {
+    if (this.loaded) return;
+    await this.loadPromise;
+  }
+
+  get(key, defaultValue = '') {
+    return this.vars[key] !== undefined ? this.vars[key] : defaultValue;
+  }
+
+  getNumber(key, defaultValue = 0) {
+    const value = this.get(key, defaultValue.toString());
+    return parseInt(value, 10) || defaultValue;
+  }
+
+  getBoolean(key, defaultValue = false) {
+    const value = this.get(key, defaultValue.toString()).toLowerCase();
+    return value === 'true' || value === '1' || value === 'yes';
+  }
+
+  getAll() {
+    return { ...this.vars };
+  }
+
+  // Helper method to check if required services are configured
+  isServiceConfigured(service) {
+    switch (service) {
+      case 'formspree':
+        return this.get('FORMSPREE_ENDPOINT') !== '';
+      case 'analytics':
+        return this.get('GA_MEASUREMENT_ID') !== '';
+      case 'calendly':
+        return this.get('CALENDLY_URL') !== '';
+      default:
+        return false;
+    }
+  }
+}
+
+// Initialize environment processor
+window.env = new EnvProcessor();
+
+// Universal Form Handler with Formspree Integration
+class FormHandler {
+  constructor() {
+    this.env = window.env;
+  }
+
+  async sendToFormspree(formData, formType = 'general') {
+    await this.env.waitForLoad();
+    
+    const endpoint = this.env.get('FORMSPREE_ENDPOINT');
+    if (!endpoint || endpoint === 'https://formspree.io/f/YOUR_FORM_ID') {
+      console.warn('Formspree not configured, using fallback method');
+      return this.fallbackHandler(formData, formType);
+    }
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          ...formData,
+          _subject: this.getEmailSubject(formType),
+          _replyto: formData.email || formData._replyto,
+          _form_type: formType,
+          _timestamp: new Date().toISOString(),
+          _url: window.location.href,
+          _user_agent: navigator.userAgent
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Formspree error: ${response.status} - ${error}`);
+      }
+
+      const result = await response.json();
+      
+      // Track successful form submission
+      this.trackFormSubmission(formType, 'success', formData);
+      
+      return {
+        success: true,
+        message: this.env.get('SUCCESS_MESSAGE', 'Thank you! We\'ll be in touch within 24 hours.'),
+        data: result
+      };
+
+    } catch (error) {
+      console.error('Form submission error:', error);
+      
+      // Track failed submission
+      this.trackFormSubmission(formType, 'error', { error: error.message });
+      
+      return {
+        success: false,
+        message: this.env.get('ERROR_MESSAGE', 'Sorry, there was an error. Please try again or call us directly.'),
+        error: error.message
+      };
+    }
+  }
+
+  fallbackHandler(formData, formType) {
+    // Fallback: Create mailto link or show contact info
+    const email = this.env.get('CONTACT_EMAIL', 'hello@softwareantelope.com');
+    const subject = encodeURIComponent(this.getEmailSubject(formType));
+    const body = encodeURIComponent(this.formatEmailBody(formData, formType));
+    
+    const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
+    
+    // Track fallback usage
+    this.trackFormSubmission(formType, 'fallback', formData);
+    
+    return {
+      success: 'fallback',
+      message: 'Opening your email client...',
+      action: () => window.open(mailtoLink, '_blank')
+    };
+  }
+
+  getEmailSubject(formType) {
+    switch (formType) {
+      case 'calculator':
+        return this.env.get('EMAIL_SUBJECT_CALCULATOR', 'Project Complexity Assessment Results');
+      case 'contact':
+        return this.env.get('EMAIL_SUBJECT_CONTACT', 'New Contact Form Submission');
+      case 'popup':
+        return 'Fast-Track Development Inquiry';
+      default:
+        return 'Website Inquiry';
+    }
+  }
+
+  formatEmailBody(formData, formType) {
+    let body = `Form Type: ${formType}\n`;
+    body += `Timestamp: ${new Date().toLocaleString()}\n`;
+    body += `Website: ${window.location.href}\n\n`;
+    
+    // Add form data
+    Object.entries(formData).forEach(([key, value]) => {
+      if (!key.startsWith('_') && value) {
+        body += `${key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${value}\n`;
+      }
+    });
+    
+    return body;
+  }
+
+  trackFormSubmission(formType, status, data = {}) {
+    if (typeof gtag === 'function') {
+      gtag('event', 'form_submission', {
+        event_category: 'forms',
+        event_label: formType,
+        form_type: formType,
+        submission_status: status,
+        value: status === 'success' ? this.env.getNumber('LEAD_VALUE', 400) : 0
+      });
+
+      if (status === 'success') {
+        gtag('event', 'generate_lead', {
+          currency: 'GBP',
+          value: this.env.getNumber('LEAD_VALUE', 400),
+          lead_source: formType,
+          form_type: formType
+        });
+      }
+    }
+  }
+
+  // Utility method for showing form feedback
+  showFormFeedback(container, result) {
+    if (!container) return;
+
+    const feedbackClass = result.success === true ? 'form-success' : 
+                         result.success === 'fallback' ? 'form-fallback' : 'form-error';
+    
+    const feedbackHTML = `
+      <div class="form-feedback ${feedbackClass}">
+        <p>${result.message}</p>
+        ${result.success === 'fallback' ? '<button onclick="result.action()" class="fallback-btn">Open Email</button>' : ''}
+      </div>
+    `;
+
+    container.innerHTML = feedbackHTML;
+
+    // Auto-remove success messages after 5 seconds
+    if (result.success === true) {
+      setTimeout(() => {
+        container.innerHTML = '';
+      }, 5000);
+    }
+  }
+}
+
+// Initialize form handler
+window.formHandler = new FormHandler();
+
 // Cookie Consent Management - GDPR Compliant
 class CookieConsent {
   constructor() {
@@ -493,6 +755,8 @@ class ProjectCalculator {
     if (projectType) {
       if (projectType.value === 'webapp' || projectType.value === 'saas') {
         totalScore += 35; // Our specialty
+      } else if (projectType.value === 'aiapp') {
+        totalScore += 30; // requires a team
       } else if (projectType.value === 'enterprise') {
         totalScore += 25; // Good fit with team
       } else if (projectType.value === 'website') {
@@ -558,10 +822,10 @@ class ProjectCalculator {
 
     // Timeline estimates based on project type and readiness
     const timelineEstimates = {
-      'website': { min: 2, max: 4, unit: 'weeks' },
-      'webapp': { min: 6, max: 12, unit: 'weeks' },
+      'website': { min: 1, max: 8, unit: 'days' },
+      'webapp': { min: 2, max: 12, unit: 'weeks' },
       'ecommerce': { min: 8, max: 16, unit: 'weeks' },
-      'saas': { min: 12, max: 24, unit: 'weeks' },
+      'saas': { min: 8, max: 24, unit: 'weeks' },
       'enterprise': { min: 16, max: 32, unit: 'weeks' }
     };
 
@@ -758,40 +1022,226 @@ class ProjectCalculator {
     const name = formData.get('name');
     const company = formData.get('company');
     
-    // Track conversion
-    this.trackCalculatorConversion('email-report', {
-      email: email,
-      name: name || 'Anonymous',
-      company: company || 'Not specified'
-    });
-    
-    // Simulate sending (replace with actual email service)
-    this.simulateEmailSend(email, name, company);
+    // Send to Formspree with calculator results
+    this.sendCalculatorResults(email, name, company);
   }
 
-  simulateEmailSend(email, name, company) {
+  async sendCalculatorResults(email, name, company) {
     // Show loading state
     const submitBtn = document.querySelector('#email-form button[type="submit"]');
     const originalText = submitBtn.textContent;
     submitBtn.textContent = 'Sending...';
     submitBtn.disabled = true;
+
+    // Prepare calculator results data
+    const results = {
+      score: this.score,
+      projectType: this.answers['project-type']?.value || 'unknown',
+      timeline: this.answers['timeline']?.value || 'unknown',
+      readiness: this.answers['readiness']?.value || 'unknown',
+      teamType: this.answers['team-type']?.value || 'unknown',
+      goal: this.answers['goal']?.value || 'unknown'
+    };
+
+    const formData = {
+      email: email,
+      name: name || 'Calculator User',
+      company: company || '',
+      message: 'Project Complexity Calculator Results',
+      
+      // Calculator specific data
+      compatibility_score: this.score,
+      project_type: results.projectType,
+      timeline_preference: results.timeline,
+      project_readiness: results.readiness,
+      team_preference: results.teamType,
+      primary_goal: results.goal,
+      
+      // Generated recommendations
+      estimated_timeline: this.generateTimelineEstimate(results),
+      recommended_approach: this.generateApproachRecommendation(results),
+      
+      // Formatted results for email
+      calculator_summary: this.formatCalculatorSummary(results)
+    };
+
+    try {
+      // Send via FormHandler
+      const result = await window.formHandler.sendToFormspree(formData, 'calculator');
+      
+      if (result.success === true) {
+        // Formspree success - show consultation booking flow
+        this.showConsultationSuccess(email, name);
+        
+        // Store lead data locally as backup
+        this.storeLeadData(email, name, company, results);
+        
+      } else if (result.success === 'fallback') {
+        // Fallback to email client
+        this.showFallbackSuccess(email, name, result);
+        
+      } else {
+        // Error occurred
+        this.showSubmissionError(result.message);
+      }
+      
+    } catch (error) {
+      console.error('Calculator submission error:', error);
+      this.showSubmissionError('Unable to send results. Please try booking a consultation directly.');
+    }
     
-    // Simulate API call delay
-    setTimeout(() => {
-      // Show success message
-      const modal = document.getElementById('email-modal');
-      modal.querySelector('.modal-body').innerHTML = `
-        <div class="success-message">
-          <h4>✅ Report Sent!</h4>
-          <p>We've sent your detailed project assessment to <strong>${email}</strong></p>
-          <p>You should receive it within the next few minutes. Check your spam folder if you don't see it.</p>
-          <p><strong>Next step:</strong> Book a free consultation to discuss your project in detail.</p>
-          <a href="#contact" class="calc-btn calc-btn-primary" onclick="document.getElementById('email-modal').style.display='none'">
-            Book Free Consultation
+    // Reset button
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+  }
+
+  generateTimelineEstimate(results) {
+    const timelineEstimates = {
+      'website': '2-4 weeks',
+      'webapp': '6-12 weeks', 
+      'ecommerce': '8-16 weeks',
+      'saas': '12-24 weeks',
+      'enterprise': '16-32 weeks'
+    };
+    
+    let estimate = timelineEstimates[results.projectType] || '4-8 weeks';
+    
+    // Adjust based on readiness
+    if (results.readiness === 'idea') {
+      estimate = estimate.replace(/(\d+)/g, (match) => parseInt(match) + 2);
+    } else if (results.readiness === 'designed') {
+      estimate = estimate.replace(/(\d+)/g, (match) => Math.max(1, parseInt(match) - 2));
+    }
+    
+    return estimate;
+  }
+
+  generateApproachRecommendation(results) {
+    const approaches = {
+      'solo-fast': 'Instant Collaboration Service - Direct development with experienced developer',
+      'solo-quality': 'Quality-Focused Solo Development - Thorough documentation and best practices',
+      'small-team': 'Small Managed Team - Specialist skills with project management',
+      'not-sure': 'Consultation-Based Approach - We\'ll recommend the optimal strategy'
+    };
+    
+    return approaches[results.teamType] || 'Custom approach based on project needs';
+  }
+
+  formatCalculatorSummary(results) {
+    return `
+Assessment Score: ${this.score}%
+Project Type: ${results.projectType}
+Timeline Preference: ${results.timeline}
+Project Readiness: ${results.readiness}
+Team Preference: ${results.teamType}
+Primary Goal: ${results.goal}
+
+Estimated Timeline: ${this.generateTimelineEstimate(results)}
+Recommended Approach: ${this.generateApproachRecommendation(results)}
+    `.trim();
+  }
+
+  storeLeadData(email, name, company, results) {
+    const leadData = {
+      email,
+      name: name || 'Calculator User',
+      company: company || '',
+      timestamp: new Date().toISOString(),
+      source: 'project_calculator',
+      results,
+      score: this.score,
+      userAgent: navigator.userAgent,
+      referrer: document.referrer || 'direct'
+    };
+    
+    localStorage.setItem('calculator_lead', JSON.stringify(leadData));
+    
+    // Add to leads collection
+    const existingLeads = JSON.parse(localStorage.getItem('all_leads') || '[]');
+    existingLeads.push(leadData);
+    localStorage.setItem('all_leads', JSON.stringify(existingLeads));
+  }
+
+  showFallbackSuccess(email, name, result) {
+    const modal = document.getElementById('email-modal');
+    modal.querySelector('.modal-body').innerHTML = `
+      <div class="success-message">
+        <h4>📧 Email Draft Ready</h4>
+        <p>We'll open your email client with a pre-filled message containing your assessment results.</p>
+        <p><strong>Alternative:</strong> Book a consultation directly below instead.</p>
+        <div class="fallback-buttons">
+          <button class="calc-btn calc-btn-primary" onclick="(${result.action.toString()})()">
+            Open Email Client
+          </button>
+          <a href="#contact" class="calc-btn calc-btn-secondary" onclick="document.getElementById('email-modal').style.display='none'; document.getElementById('contact').scrollIntoView({behavior: 'smooth'});">
+            Book Consultation Instead
           </a>
         </div>
-      `;
-    }, 2000);
+      </div>
+    `;
+  }
+
+  showSubmissionError(message) {
+    const modal = document.getElementById('email-modal');
+    modal.querySelector('.modal-body').innerHTML = `
+      <div class="error-message">
+        <h4>⚠️ Unable to Send Report</h4>
+        <p>${message}</p>
+        <p><strong>No worries!</strong> Let's discuss your project directly instead.</p>
+        <div class="error-buttons">
+          <a href="#contact" class="calc-btn calc-btn-primary" onclick="document.getElementById('email-modal').style.display='none'; document.getElementById('contact').scrollIntoView({behavior: 'smooth'});">
+            Book Free Consultation
+          </a>
+          <button class="calc-btn calc-btn-secondary" onclick="document.getElementById('email-modal').style.display='none'">
+            I'll Try Later
+          </button>
+        </div>
+        <p class="contact-info">
+          <small>Or call us directly: ${window.env ? window.env.get('PHONE', '+44-7565-112990') : '+44-7565-112990'}</small>
+        </p>
+      </div>
+    `;
+  }
+
+  captureLeadAndBook(email, name, company) {
+    // This method now calls sendCalculatorResults for consistency
+    this.sendCalculatorResults(email, name, company);
+  }
+
+  showConsultationSuccess(email, name) {
+    const modal = document.getElementById('email-modal');
+    const displayName = name || email.split('@')[0];
+    
+    modal.querySelector('.modal-body').innerHTML = `
+      <div class="success-message">
+        <h4>🎯 Perfect, ${displayName}!</h4>
+        <p>Your project assessment shows <strong>${this.score}% compatibility</strong> with our expertise.</p>
+        <p><strong>Next step:</strong> Let's discuss your specific requirements in a free 30-minute strategy session.</p>
+        <div class="consultation-benefits">
+          <h5>In your consultation, we'll cover:</h5>
+          <ul>
+            <li>✅ Detailed timeline breakdown for your project</li>
+            <li>✅ Technology recommendations based on your needs</li>
+            <li>✅ Risk assessment and mitigation strategies</li>
+            <li>✅ Fixed-price quote within 48 hours</li>
+            <li>✅ No obligation - valuable insights regardless</li>
+          </ul>
+        </div>
+        <div class="cta-buttons">
+          <a href="#contact" class="calc-btn calc-btn-primary calc-btn-large" onclick="this.closest('.calculator-modal').style.display='none'; document.getElementById('contact').scrollIntoView({behavior: 'smooth'});">
+            Book My Free Strategy Session
+          </a>
+          <button class="calc-btn calc-btn-secondary" onclick="this.closest('.calculator-modal').style.display='none';">
+            I'll Book Later
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  simulateEmailSend(email, name, company) {
+    // This function is replaced by captureLeadAndBook
+    this.captureLeadAndBook(email, name, company);
   }
 
   // Analytics tracking functions
@@ -854,3 +1304,481 @@ document.addEventListener('DOMContentLoaded', () => {
     window.projectCalculator = new ProjectCalculator();
   }
 });
+
+// Smart Pricing Popup System
+class SmartPricingPopup {
+  constructor() {
+    this.timeThreshold = 120000; // 120 seconds
+    this.hasShown = false;
+    this.calculatorCompleted = false;
+    this.exitIntentTriggered = false;
+    this.startTime = Date.now();
+    
+    this.init();
+  }
+
+  init() {
+    // Check if popup has been shown before (respect user choice)
+    if (localStorage.getItem('pricing-popup-dismissed')) {
+      return;
+    }
+
+    // Check if calculator was completed (no popup needed)
+    this.checkCalculatorStatus();
+    
+    // Set up event listeners
+    this.bindEvents();
+    
+    // Start time-based trigger
+    this.startTimeBasedTrigger();
+  }
+
+  checkCalculatorStatus() {
+    // Check if calculator was completed in this session
+    const calculatorLead = localStorage.getItem('calculator_lead');
+    if (calculatorLead) {
+      const leadData = JSON.parse(calculatorLead);
+      const leadTime = new Date(leadData.timestamp).getTime();
+      const now = Date.now();
+      
+      // If calculator was completed within last 24 hours, don't show popup
+      if (now - leadTime < 86400000) { // 24 hours
+        this.calculatorCompleted = true;
+        return;
+      }
+    }
+
+    // Check if user is currently on calculator section
+    if (window.location.hash === '#calculator') {
+      this.calculatorCompleted = true;
+      return;
+    }
+
+    // Listen for calculator completion
+    document.addEventListener('calculator-completed', () => {
+      this.calculatorCompleted = true;
+    });
+  }
+
+  bindEvents() {
+    // Exit intent detection (desktop)
+    if (!this.isMobile()) {
+      document.addEventListener('mouseleave', (e) => {
+        if (e.clientY <= 0 && !this.exitIntentTriggered) {
+          this.triggerExitIntent();
+        }
+      });
+    }
+
+    // Mobile scroll-up detection (mobile exit intent)
+    if (this.isMobile()) {
+      let lastScrollY = window.scrollY;
+      
+      window.addEventListener('scroll', () => {
+        const currentScrollY = window.scrollY;
+        
+        // If user scrolls up quickly near top of page
+        if (currentScrollY < lastScrollY && currentScrollY < 100 && !this.exitIntentTriggered) {
+          this.triggerExitIntent();
+        }
+        
+        lastScrollY = currentScrollY;
+      });
+    }
+
+    // Popup dismiss handlers
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'pricing-popup-overlay' || e.target.id === 'pricing-popup-close') {
+        this.dismissPopup();
+      }
+    });
+
+    // Keyboard escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && document.getElementById('pricing-popup')) {
+        this.dismissPopup();
+      }
+    });
+  }
+
+  startTimeBasedTrigger() {
+    setTimeout(() => {
+      if (!this.hasShown && !this.calculatorCompleted) {
+        this.showPopup('time-based');
+      }
+    }, this.timeThreshold);
+  }
+
+  triggerExitIntent() {
+    this.exitIntentTriggered = true;
+    
+    // Only show if enough time has passed and popup hasn't been shown
+    const timeElapsed = Date.now() - this.startTime;
+    if (timeElapsed > 30000 && !this.hasShown && !this.calculatorCompleted) { // At least 30 seconds
+      this.showPopup('exit-intent');
+    }
+  }
+
+  showPopup(trigger) {
+    if (this.hasShown || this.calculatorCompleted) return;
+    
+    this.hasShown = true;
+    
+    // Track popup display
+    if (typeof gtag === 'function') {
+      gtag('event', 'popup_displayed', {
+        event_category: 'engagement',
+        event_label: 'pricing_popup',
+        trigger_type: trigger,
+        time_on_page: Math.round((Date.now() - this.startTime) / 1000)
+      });
+    }
+
+    // Create popup HTML
+    this.createPopupHTML();
+    
+    // Show with animation
+    const popup = document.getElementById('pricing-popup');
+    popup.style.display = 'flex';
+    
+    // Animate in
+    setTimeout(() => {
+      popup.classList.add('popup-visible');
+    }, 50);
+  }
+
+  createPopupHTML() {
+    const popupHTML = `
+      <div id="pricing-popup" class="pricing-popup">
+        <div id="pricing-popup-overlay" class="popup-overlay"></div>
+        <div class="popup-content">
+          <button id="pricing-popup-close" class="popup-close" aria-label="Close popup">&times;</button>
+          
+          <div class="popup-header">
+            <h3>🚀 Limited Time: Fast-Track Your Project</h3>
+            <div class="urgency-indicator">
+              <span class="urgency-dot"></span>
+              <span>Special pricing available now</span>
+            </div>
+          </div>
+
+          <div class="popup-body">
+            <div class="offer-content">
+              <div class="offer-badge">Founder's Special Offer</div>
+              
+              <h4>Start Your Project in 7 Days</h4>
+              <p class="offer-description">
+                Skip the usual 2-3 week planning phase. Get a complete project roadmap 
+                and fixed-price quote within 48 hours of our consultation.
+              </p>
+
+              <div class="offer-benefits">
+                <div class="benefit-item">
+                  <span class="benefit-icon">⚡</span>
+                  <div>
+                    <strong>Fast-Track Development</strong>
+                    <p>Start building within 7 days of agreement</p>
+                  </div>
+                </div>
+                <div class="benefit-item">
+                  <span class="benefit-icon">💰</span>
+                  <div>
+                    <strong>50% Deposit Only</strong>
+                    <p>Reduced upfront payment vs. standard terms</p>
+                  </div>
+                </div>
+                <div class="benefit-item">
+                  <span class="benefit-icon">🎯</span>
+                  <div>
+                    <strong>Fixed-Price Guarantee</strong>
+                    <p>No surprises - know your exact cost upfront</p>
+                  </div>
+                </div>
+                <div class="benefit-item">
+                  <span class="benefit-icon">🛡️</span>
+                  <div>
+                    <strong>30-Day Satisfaction Guarantee</strong>
+                    <p>Risk-free development with full warranty</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="social-proof">
+                <p class="social-proof-text">
+                  <strong>Join 50+ successful projects</strong> including Pfizer, Tesco, and Virgin Media
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="popup-footer">
+            <div class="cta-section">
+              <p class="cta-text">Ready to fast-track your project?</p>
+              <div class="popup-buttons">
+                <button class="popup-btn popup-btn-primary" onclick="window.smartPopup.takeOffer()">
+                  Claim Fast-Track Offer
+                </button>
+                <button class="popup-btn popup-btn-secondary" onclick="window.smartPopup.showCalculator()">
+                  Take Project Assessment First
+                </button>
+              </div>
+              <p class="disclaimer">No spam, no obligation. Just expert guidance.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', popupHTML);
+  }
+
+  takeOffer() {
+    // Track conversion
+    if (typeof gtag === 'function') {
+      gtag('event', 'conversion', {
+        event_category: 'popup',
+        event_label: 'fast_track_offer',
+        value: 400,
+        currency: 'GBP',
+        conversion_type: 'popup_to_consultation'
+      });
+
+      gtag('event', 'generate_lead', {
+        currency: 'GBP',
+        value: 400,
+        lead_source: 'pricing_popup',
+        offer_type: 'fast_track'
+      });
+    }
+
+    // Store offer acceptance
+    localStorage.setItem('fast-track-offer-claimed', JSON.stringify({
+      timestamp: new Date().toISOString(),
+      offer: 'fast_track_development',
+      value: 'consultation_booking'
+    }));
+
+    // Close popup and scroll to contact
+    this.dismissPopup(false); // Don't mark as dismissed permanently
+    
+    // Show confirmation and scroll to contact
+    setTimeout(() => {
+      document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
+      
+      // Optional: Show confirmation message
+      this.showOfferConfirmation();
+    }, 300);
+  }
+
+  showCalculator() {
+    // Track calculator redirect
+    if (typeof gtag === 'function') {
+      gtag('event', 'click', {
+        event_category: 'popup',
+        event_label: 'calculator_redirect',
+        popup_type: 'pricing'
+      });
+    }
+
+    // Close popup and go to calculator
+    this.dismissPopup(false);
+    
+    setTimeout(() => {
+      window.location.hash = '#calculator';
+      document.getElementById('calculator').scrollIntoView({ behavior: 'smooth' });
+    }, 300);
+  }
+
+  showOfferConfirmation() {
+    // Create a temporary confirmation message
+    const confirmationHTML = `
+      <div id="offer-confirmation" class="offer-confirmation">
+        <div class="confirmation-content">
+          <h4>🎉 Fast-Track Offer Claimed!</h4>
+          <p>Book your consultation below to get started within 7 days.</p>
+          <p><strong>Remember:</strong> Mention "Fast-Track Offer" for 50% deposit terms.</p>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', confirmationHTML);
+    
+    // Auto-remove after 8 seconds
+    setTimeout(() => {
+      const confirmation = document.getElementById('offer-confirmation');
+      if (confirmation) {
+        confirmation.remove();
+      }
+    }, 8000);
+  }
+
+  dismissPopup(permanent = true) {
+    const popup = document.getElementById('pricing-popup');
+    if (!popup) return;
+
+    // Animate out
+    popup.classList.remove('popup-visible');
+    
+    setTimeout(() => {
+      popup.remove();
+    }, 300);
+
+    if (permanent) {
+      // Remember user dismissed popup (respect their choice)
+      localStorage.setItem('pricing-popup-dismissed', Date.now().toString());
+      
+      // Track dismissal
+      if (typeof gtag === 'function') {
+        gtag('event', 'popup_dismissed', {
+          event_category: 'engagement',
+          event_label: 'pricing_popup',
+          time_on_page: Math.round((Date.now() - this.startTime) / 1000)
+        });
+      }
+    }
+  }
+
+  isMobile() {
+    return window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }
+}
+
+// Global functions for popup actions
+window.smartPopup = null;
+
+// Initialize smart popup system
+document.addEventListener('DOMContentLoaded', () => {
+  // Initialize calculator if the section exists
+  if (document.getElementById('calculator')) {
+    window.projectCalculator = new ProjectCalculator();
+  }
+
+  // Initialize contact form handler
+  const contactForm = document.getElementById('contact-form');
+  if (contactForm) {
+    contactForm.addEventListener('submit', handleContactFormSubmit);
+  }
+
+  // Initialize popup system with slight delay to ensure other systems load first
+  setTimeout(() => {
+    window.smartPopup = new SmartPricingPopup();
+  }, 5000); // 5 second delay before popup system starts monitoring
+});
+
+// Contact Form Handler
+async function handleContactFormSubmit(e) {
+  e.preventDefault();
+  
+  const form = e.target;
+  const formData = new FormData(form);
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const feedbackContainer = document.getElementById('contact-form-feedback');
+  
+  // Show loading state
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = 'Sending...';
+  submitBtn.disabled = true;
+  
+  // Clear previous feedback
+  feedbackContainer.innerHTML = '';
+  
+  // Prepare form data
+  const contactData = {
+    name: formData.get('name'),
+    email: formData.get('email'),
+    company: formData.get('company') || '',
+    phone: formData.get('phone') || '',
+    project_type: formData.get('project_type') || 'Not specified',
+    budget_range: formData.get('budget_range') || 'Not specified',
+    timeline: formData.get('timeline') || 'Not specified',
+    message: formData.get('message'),
+    
+    // Additional context
+    source: 'contact_form',
+    page_url: window.location.href,
+    referrer: document.referrer || 'Direct'
+  };
+  
+  try {
+    // Send via FormHandler
+    const result = await window.formHandler.sendToFormspree(contactData, 'contact');
+    
+    if (result.success === true) {
+      // Success - show confirmation
+      feedbackContainer.innerHTML = `
+        <div class="form-feedback form-success">
+          <h4>✅ Message Sent Successfully!</h4>
+          <p>Thank you for your inquiry. We'll review your project details and respond within 24 hours.</p>
+          <p><strong>Next steps:</strong></p>
+          <ul>
+            <li>We'll analyze your requirements</li>
+            <li>Prepare a tailored response</li>
+            <li>Schedule a follow-up call if needed</li>
+          </ul>
+        </div>
+      `;
+      
+      // Clear form on success
+      form.reset();
+      
+      // Track successful contact form submission
+      if (typeof gtag === 'function') {
+        gtag('event', 'generate_lead', {
+          currency: 'GBP',
+          value: window.env.getNumber('LEAD_VALUE', 400),
+          lead_source: 'contact_form',
+          project_type: contactData.project_type,
+          budget_range: contactData.budget_range
+        });
+      }
+      
+    } else if (result.success === 'fallback') {
+      // Fallback to email client
+      feedbackContainer.innerHTML = `
+        <div class="form-feedback form-fallback">
+          <h4>📧 Email Draft Ready</h4>
+          <p>We'll open your email client with your message pre-filled.</p>
+          <button onclick="${result.action}" class="btn-primary">Open Email Client</button>
+          <p><small>Alternative: Call us directly at ${window.env.get('PHONE', '+44-7565-112990')}</small></p>
+        </div>
+      `;
+      
+    } else {
+      // Error occurred
+      feedbackContainer.innerHTML = `
+        <div class="form-feedback form-error">
+          <h4>⚠️ Unable to Send Message</h4>
+          <p>${result.message}</p>
+          <p><strong>Alternative contact methods:</strong></p>
+          <ul>
+            <li>Call us: ${window.env.get('PHONE', '+44-7565-112990')}</li>
+            <li>Email: ${window.env.get('CONTACT_EMAIL', 'hello@softwareantelope.com')}</li>
+            <li>Book a consultation using the calendar below</li>
+          </ul>
+          <button onclick="this.closest('.form-feedback').remove()" class="btn-secondary">Try Again</button>
+        </div>
+      `;
+    }
+    
+  } catch (error) {
+    console.error('Contact form error:', error);
+    feedbackContainer.innerHTML = `
+      <div class="form-feedback form-error">
+        <h4>⚠️ Technical Error</h4>
+        <p>Sorry, there was a technical issue. Please try one of these alternatives:</p>
+        <ul>
+          <li>Call us directly: ${window.env.get('PHONE', '+44-7565-112990')}</li>
+          <li>Email: ${window.env.get('CONTACT_EMAIL', 'hello@softwareantelope.com')}</li>
+          <li>Use the booking calendar below</li>
+        </ul>
+      </div>
+    `;
+  }
+  
+  // Reset button state
+  submitBtn.textContent = originalText;
+  submitBtn.disabled = false;
+  
+  // Scroll to feedback
+  feedbackContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}

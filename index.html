@@ -635,7 +635,9 @@
       <h2>Project Complexity Calculator</h2>
       <p class="calculator-intro">
         Get an instant assessment of your project's complexity and timeline. 
-        Find out if we're the right fit for your development needs.
+        Find out if we're the right fit for your development needs. Please note,
+        this is a broad estimate and real clarity can be reached by understanding
+        your project.  
       </p>
       
       <div class="calculator-container">
@@ -666,6 +668,13 @@
                 <div class="option-content">
                   <h4>Web Application</h4>
                   <p>Interactive app with user accounts, dashboards, forms</p>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="project-type" value="aiapp" data-score="25" data-weeks="6-12">
+                <div class="option-content">
+                  <h4>AI Connected Website</h4>
+                  <p>Website with AI automations and APIs</p>
                 </div>
               </label>
               <label class="option-card">
@@ -1088,10 +1097,103 @@
   <section id="contact" class="section">
     <div class="container">
       <h2>Ready to Start Your Next Project?</h2>
-      <!-- Calendly inline widget begin -->
-      <div class="calendly-inline-widget" data-url="https://calendly.com/youronlineuk"
-        style="min-width:320px;height:700px;"></div>
-      <!-- Calendly inline widget end -->
+      
+      <!-- Contact Options -->
+      <div class="contact-options">
+        <div class="contact-method">
+          <h3>Quick Contact Form</h3>
+          <p>Get a response within 24 hours</p>
+          
+          <form id="contact-form" class="contact-form" data-form-type="contact">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="contact-name">Name *</label>
+                <input type="text" id="contact-name" name="name" required placeholder="Your full name">
+              </div>
+              <div class="form-group">
+                <label for="contact-email">Email *</label>
+                <input type="email" id="contact-email" name="email" required placeholder="your.email@company.com">
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="contact-company">Company</label>
+                <input type="text" id="contact-company" name="company" placeholder="Your company name">
+              </div>
+              <div class="form-group">
+                <label for="contact-phone">Phone</label>
+                <input type="tel" id="contact-phone" name="phone" placeholder="Your phone number">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="project-type">Project Type</label>
+              <select id="project-type" name="project_type">
+                <option value="">Select project type</option>
+                <option value="website">Website/Landing Page</option>
+                <option value="webapp">Web Application</option>
+                <option value="ecommerce">E-commerce Platform</option>
+                <option value="saas">SaaS Platform</option>
+                <option value="enterprise">Enterprise System</option>
+                <option value="consultation">Just need consultation</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="budget-range">Budget Range</label>
+              <select id="budget-range" name="budget_range">
+                <option value="">Select budget range</option>
+                <option value="under-5k">Under £5,000</option>
+                <option value="5k-15k">£5,000 - £15,000</option>
+                <option value="15k-35k">£15,000 - £35,000</option>
+                <option value="35k-75k">£35,000 - £75,000</option>
+                <option value="75k-plus">£75,000+</option>
+                <option value="not-sure">Not sure yet</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="contact-message">Project Details *</label>
+              <textarea id="contact-message" name="message" required placeholder="Tell us about your project, timeline, and any specific requirements..." rows="4"></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label for="timeline">Preferred Timeline</label>
+              <select id="timeline" name="timeline">
+                <option value="">Select timeline</option>
+                <option value="asap">ASAP (Urgent project)</option>
+                <option value="rapid">Rapid (1-4 weeks)</option>
+                <option value="1-month">1-2 months</option>
+                <option value="3-months">2-4 months</option>
+                <option value="6-months">4-8 months</option>
+                <option value="flexible">Flexible timeline</option>
+              </select>
+            </div>
+            
+            <div class="form-actions">
+              <button type="submit" class="btn-primary btn-large">Send Message</button>
+              <p class="form-disclaimer">We'll respond within 24 hours. No spam, no pushy sales calls.</p>
+            </div>
+            
+            <div id="contact-form-feedback" class="form-feedback-container"></div>
+          </form>
+        </div>
+
+        <div class="contact-divider">
+          <span>OR</span>
+        </div>
+
+        <div class="contact-method">
+          <h3>Book a Free Consultation</h3>
+          <p>Schedule a 30-minute strategy session</p>
+          <!-- Calendly inline widget begin -->
+          <div class="calendly-inline-widget" data-url="https://calendly.com/youronlineuk"
+            style="min-width:320px;height:600px;"></div>
+          <!-- Calendly inline widget end -->
+        </div>
+      </div>
     </div>
   </section>
 
